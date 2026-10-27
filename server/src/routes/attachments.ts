@@ -1,5 +1,4 @@
 import crypto from 'node:crypto';
-import fs from 'node:fs';
 import path from 'node:path';
 import { Router } from 'express';
 import multer from 'multer';
@@ -9,17 +8,13 @@ import { env } from '../env.js';
 import { badRequest, forbidden, notFound } from '../http.js';
 import { logActivity } from '../lib/activity.js';
 import { clientScope, getVisibleTask, projectScope } from '../lib/scope.js';
+import { removeFile, saveFile, sendFile } from '../lib/storage.js';
 
 export const attachmentsRouter = Router();
 
-fs.mkdirSync(env.uploadDir, { recursive: true });
-
 const upload = multer({
-    storage: multer.diskStorage({
-        destination: env.uploadDir,
-        filename: (_req, file, cb) => cb(null, `${crypto.randomUUID()}${path.extname(file.originalname)}`),
-    }),
-    limits: { fileSize: 25 * 1024 * 1024, files: 10 },
+    storage: multer.memoryStorage(),
+    limits: { fileSize: env.maxUploadBytes, files: 10 },
 });
 
 type Target = { taskId?: string | null; projectId?: string | null; clientId?: string | null };
@@ -53,23 +48,20 @@ attachmentsRouter.post('/', upload.array('files'), async (req, res) => {
         projectId: req.body.projectId || null,
         clientId: req.body.clientId || null,
     };
-    try {
-        if (files.length === 0) throw badRequest('No files were uploaded');
-        if ([target.taskId, target.projectId, target.clientId].filter(Boolean).length !== 1) {
-            throw badRequest('Attach files to exactly one task, project or client');
-        }
-        await assertCanWrite(req.user, target);
-    } catch (err) {
-        files.forEach((f) => fs.rm(f.path, { force: true }, () => {}));
-        throw err;
+    if (files.length === 0) throw badRequest('No files were uploaded');
+    if ([target.taskId, target.projectId, target.clientId].filter(Boolean).length !== 1) {
+        throw badRequest('Attach files to exactly one task, project or client');
     }
+    await assertCanWrite(req.user, target);
 
+    const storedNames = files.map((f) => `${crypto.randomUUID()}${path.extname(f.originalname)}`);
+    await Promise.all(files.map((f, i) => saveFile(storedNames[i], f.buffer)));
     const saved = await db.$transaction(
-        files.map((f) =>
+        files.map((f, i) =>
             db.attachment.create({
                 data: {
                     ...target,
-                    storedName: f.filename,
+                    storedName: storedNames[i],
                     originalName: f.originalname,
                     mimeType: f.mimetype,
                     size: f.size,
@@ -88,7 +80,7 @@ attachmentsRouter.get('/:id/download', async (req, res) => {
     const file = await db.attachment.findUnique({ where: { id: req.params.id } });
     if (!file) throw notFound('File not found');
     await assertCanRead(req.user, file);
-    res.download(path.join(env.uploadDir, file.storedName), file.originalName);
+    await sendFile(res, file.storedName, file.mimeType, file.originalName);
 });
 
 attachmentsRouter.delete('/:id', async (req, res) => {
@@ -96,6 +88,6 @@ attachmentsRouter.delete('/:id', async (req, res) => {
     if (!file) throw notFound('File not found');
     if (file.uploaderId !== req.user.id && req.user.role !== 'ADMIN') throw forbidden('Only the uploader can remove this file');
     await db.attachment.delete({ where: { id: file.id } });
-    fs.rm(path.join(env.uploadDir, file.storedName), { force: true }, () => {});
+    removeFile(file.storedName);
     res.json({ ok: true });
 });

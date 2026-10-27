@@ -6,3 +6,15 @@ dist
 server/uploads
 logs
 *.tsbuildinfo
+server/prisma/postgres
+
+.vercel
+.env.local
+
+node_modules/
+.env
+.env.local
+*.db
+server/uploads/
+.vercel/
+dist/

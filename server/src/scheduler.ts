@@ -6,6 +6,14 @@ import { describeRule, nextOccurrence } from './lib/recurrence.js';
 
 const MINUTE = 60 * 1000;
 
+/**
+ * Marks an occurrence as handled before acting on it. On Vercel several instances can tick at once;
+ * the conditional update lets exactly one of them win, so nobody gets duplicate tasks or reminders.
+ */
+async function claim(update: Promise<{ count: number }>) {
+    return (await update).count === 1;
+}
+
 /** Who receives a schedule's reminders: the target user, a whole team, or everyone in the creator's reach. */
 export async function scheduleRecipients(s: Schedule): Promise<string[]> {
     const ids = new Set<string>();
@@ -48,6 +56,10 @@ async function sendUpcomingReminders(now: Date) {
         const alreadySent = s.remindedFor?.getTime() === runAt.getTime();
         if (alreadySent || s.remindMinutesBefore <= 0) continue;
         if (runAt.getTime() - s.remindMinutesBefore * MINUTE > now.getTime()) continue;
+        if (!(await claim(db.schedule.updateMany({
+            where: { id: s.id, OR: [{ remindedFor: null }, { remindedFor: { not: runAt } }] },
+            data: { remindedFor: runAt },
+        })))) continue;
 
         await notify(
             await scheduleRecipients(s),
@@ -55,7 +67,6 @@ async function sendUpcomingReminders(now: Date) {
             `Starts ${runAt.toLocaleString()} (${describeRule(s)}).${s.description ? `\n${s.description}` : ''}`,
             '/calendar',
         );
-        await db.schedule.update({ where: { id: s.id }, data: { remindedFor: runAt } });
     }
 }
 
@@ -64,6 +75,14 @@ async function runDueSchedules(now: Date) {
     const due = await db.schedule.findMany({ where: { active: true, nextRunAt: { lte: now } } });
     for (const s of due) {
         const runAt = s.nextRunAt!;
+
+        // Skip any occurrences missed while the server was down instead of flooding people with tasks.
+        let next = nextOccurrence(s, runAt);
+        while (next && next <= now) next = nextOccurrence(s, next);
+        if (!(await claim(db.schedule.updateMany({
+            where: { id: s.id, nextRunAt: runAt },
+            data: { lastRunAt: runAt, nextRunAt: next, active: next !== null },
+        })))) continue;
 
         if (s.assigneeId) {
             const assignee = await db.user.findUnique({ where: { id: s.assigneeId } });
@@ -96,14 +115,6 @@ async function runDueSchedules(now: Date) {
             // A calendar event without an assignee just alerts its recipients when it starts.
             await notify(await scheduleRecipients(s), `Today: ${s.title}`, s.description, '/calendar');
         }
-
-        // Skip any occurrences missed while the server was down instead of flooding people with tasks.
-        let next = nextOccurrence(s, runAt);
-        while (next && next <= now) next = nextOccurrence(s, next);
-        await db.schedule.update({
-            where: { id: s.id },
-            data: { lastRunAt: runAt, nextRunAt: next, active: next !== null },
-        });
     }
 }
 
@@ -117,6 +128,7 @@ async function sendDueTaskReminders(now: Date) {
         },
     });
     for (const t of tasks) {
+        if (!(await claim(db.task.updateMany({ where: { id: t.id, dueReminderSent: false }, data: { dueReminderSent: true } })))) continue;
         const overdue = t.dueDate! < now;
         await notify(
             [t.assigneeId],
@@ -124,7 +136,6 @@ async function sendDueTaskReminders(now: Date) {
             `Due ${t.dueDate!.toLocaleString()}`,
             `/tasks/${t.id}`,
         );
-        await db.task.update({ where: { id: t.id }, data: { dueReminderSent: true } });
     }
 }
 

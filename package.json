@@ -13,7 +13,8 @@
     "typecheck": "npm run typecheck -w server && npm run typecheck -w client",
     "start": "npm run start -w server",
     "build:deploy": "npm run db:generate -w server && npm run build -w client",
-    "start:deploy": "npm run start:deploy -w server"
+    "start:deploy": "npm run start:deploy -w server",
+    "build:vercel": "npm run vercel-build -w server && npm run build -w client"
   },
   "devDependencies": {
     "concurrently": "^9.2.5"

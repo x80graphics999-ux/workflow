@@ -5,7 +5,7 @@ import { requireAuth, signToken } from '../auth.js';
 import { db } from '../db.js';
 import { badRequest, HttpError, parse } from '../http.js';
 import { logActivity } from '../lib/activity.js';
-import { AVATAR_URL_PREFIX, avatarUpload, removeAvatarFile } from '../lib/avatars.js';
+import { avatarUpload, removeAvatarFile, saveAvatar } from '../lib/avatars.js';
 
 export const authRouter = Router();
 
@@ -38,7 +38,7 @@ authRouter.post('/change-password', requireAuth, async (req, res) => {
 
 authRouter.post('/avatar', requireAuth, avatarUpload.single('avatar'), async (req, res) => {
     if (!req.file) throw badRequest('Choose an image to upload');
-    const avatarUrl = AVATAR_URL_PREFIX + req.file.filename;
+    const avatarUrl = await saveAvatar(req.file);
     await db.user.update({ where: { id: req.user.id }, data: { avatarUrl } });
     removeAvatarFile(req.user.avatarUrl);
     res.json({ avatarUrl });

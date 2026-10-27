@@ -47,7 +47,9 @@ async function request(path: string, { method, body, form }: Options = {}) {
     }
     if (!res.ok) {
         const data = res.headers.get('content-type')?.includes('json') ? await res.json() : null;
-        throw new ApiError(data?.error ?? `Request failed (${res.status})`, res.status);
+        // 413 comes from the host (e.g. Vercel's 4.5 MB request limit), not from our API.
+        const fallback = res.status === 413 ? 'The file is too large' : `Request failed (${res.status})`;
+        throw new ApiError(data?.error ?? fallback, res.status);
     }
     return res;
 }

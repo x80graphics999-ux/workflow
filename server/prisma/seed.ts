@@ -20,6 +20,8 @@ async function main() {
 
     // Hosted installs set ADMIN_EMAIL / ADMIN_PASSWORD: create only that admin, without the demo accounts.
     const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+    // Never put the demo accounts (with their published password) on a public Vercel deployment.
+    if (!adminEmail && process.env.VERCEL) throw new Error('Set ADMIN_EMAIL, ADMIN_PASSWORD and ADMIN_NAME in the Vercel project settings');
     if (adminEmail) {
         const adminPassword = process.env.ADMIN_PASSWORD ?? '';
         if (adminPassword.length < 8) throw new Error('ADMIN_PASSWORD must be set and at least 8 characters long');

@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { AuthUser } from '../auth.js';
 import { db } from '../db.js';
+import { env } from '../env.js';
 import { badRequest, forbidden, notFound, parse } from '../http.js';
 import { logActivity } from '../lib/activity.js';
 import { notify } from '../lib/notify.js';
@@ -52,6 +53,9 @@ function assertAssignee(user: AuthUser, task: { assigneeId: string }) {
 
 const link = (id: string) => `/tasks/${id}`;
 
+/** SQLite's LIKE ignores case already; Postgres needs `mode: 'insensitive'`, which the SQLite client types don't know. */
+const textSearch = (q: string) => ({ contains: q, ...(env.postgres ? { mode: 'insensitive' } : {}) }) as Prisma.StringFilter;
+
 // ---- Queries ----
 
 const listQuery = z.object({
@@ -75,7 +79,7 @@ tasksRouter.get('/', async (req, res) => {
             f.mine ? { assigneeId: req.user.id } : {},
             f.clientId ? { clientId: f.clientId } : {},
             f.projectId ? { projectId: f.projectId } : {},
-            f.q ? { OR: [{ title: { contains: f.q } }, { description: { contains: f.q } }] } : {},
+            f.q ? { OR: [{ title: textSearch(f.q) }, { description: textSearch(f.q) }] } : {},
             f.from ? { createdAt: { gte: new Date(f.from) } } : {},
             f.to ? { createdAt: { lte: new Date(`${f.to}T23:59:59`) } } : {},
         ],

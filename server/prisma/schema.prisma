@@ -175,6 +175,14 @@ model Attachment {
   client     Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }
 
+// File contents when FILE_STORAGE=database (the default on Vercel, which has no persistent disk).
+// `name` matches Attachment.storedName, or avatars/<file> for profile pictures.
+model StoredFile {
+  name      String   @id
+  data      Bytes
+  createdAt DateTime @default(now())
+}
+
 // A calendar entry. ONCE = a single future task/event; other frequencies repeat until endAt.
 // When assigneeId is set, the scheduler creates a real task instance at each occurrence.
 // Recipients get the "upcoming" reminder (USER, TEAM or EVERYONE in the creator's scope).

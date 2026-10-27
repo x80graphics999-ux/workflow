@@ -11,7 +11,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "setup": "prisma db push && tsx prisma/seed.ts",
     "db:generate": "prisma generate",
-    "start:deploy": "prisma db push --skip-generate && tsx prisma/seed.ts && tsx src/index.ts"
+    "start:deploy": "prisma db push --skip-generate && tsx prisma/seed.ts && tsx src/index.ts",
+    "vercel-build": "node prisma/postgres-schema.mjs && prisma generate --schema prisma/postgres/schema.prisma && prisma db push --skip-generate --schema prisma/postgres/schema.prisma && tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
