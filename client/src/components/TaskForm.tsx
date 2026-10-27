@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { api, uploadFiles, useApi } from '../lib/api';
+import { api, MAX_UPLOAD_MB, uploadFiles, useApi } from '../lib/api';
 import { PRIORITY_LABEL, ROLE_LABEL, toLocalInput } from '../lib/format';
 import type { AssignableUser, Client, Priority, Project, TaskSummary } from '../lib/types';
 import { Button, ErrorText, errorMessage, Field, Modal } from './ui';
@@ -127,7 +127,7 @@ export function TaskForm({
                 <Field label="Notes for the assignee">
                     <textarea className="input min-h-16" value={form.notes} onChange={(e) => set('notes', e.target.value)} />
                 </Field>
-                <Field label={task ? 'Add attachments' : 'Attachments'} hint="Up to 10 files, 25 MB each">
+                <Field label={task ? 'Add attachments' : 'Attachments'} hint={`Up to 10 files, ${MAX_UPLOAD_MB} MB each`}>
                     <input
                         type="file"
                         multiple

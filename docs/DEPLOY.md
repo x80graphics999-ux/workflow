@@ -2,7 +2,7 @@
 
 TaskFlow runs as one always-on Node.js server with a SQLite database and an uploads folder. Hosting it needs a platform with a **persistent disk**, so the database and files survive restarts and deploys. Railway (recommended) and Render both do this; the project includes ready-made config for each (`railway.json`, `render.yaml`).
 
-> **Why not Vercel?** Vercel runs code only while a request is open and doesn't keep files, so TaskFlow's database, uploads and every-minute reminder scheduler wouldn't work there without a rewrite.
+> **Prefer a free host?** TaskFlow also runs on Vercel with a free Neon Postgres database, with smaller uploads and less frequent reminders. See [DEPLOY-VERCEL.md](DEPLOY-VERCEL.md).
 
 The first deploy creates an empty database with **one admin account that you choose**. The demo accounts are not created online.
 

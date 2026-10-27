@@ -28,6 +28,8 @@ Change these passwords (or delete the demo users) before using it for real work.
 
 **Online (Railway or Render):** follow [docs/DEPLOY.md](docs/DEPLOY.md). The first deploy creates only the admin account you choose, not the demo accounts.
 
+**Online for free (Vercel + Neon Postgres):** follow [docs/DEPLOY-VERCEL.md](docs/DEPLOY-VERCEL.md).
+
 **Office network (LAN):** to let everyone on your network use TaskFlow from one PC, follow [docs/LAN-SETUP.md](docs/LAN-SETUP.md). It covers the firewall, a fixed address, starting automatically, updates and backups.
 
 ## What each role can do

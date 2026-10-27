@@ -73,12 +73,18 @@ export async function download(path: string, fallbackName: string) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+export const MAX_UPLOAD_MB = __MAX_UPLOAD_MB__;
+
+/** One request per file, so several files together never exceed the host's request size limit. */
 export async function uploadFiles(files: File[], target: { taskId?: string; projectId?: string; clientId?: string }) {
-    if (files.length === 0) return;
-    const form = new FormData();
-    files.forEach((f) => form.append('files', f));
-    Object.entries(target).forEach(([k, v]) => v && form.append(k, v));
-    await api('/attachments', { form });
+    const tooLarge = files.find((f) => f.size > MAX_UPLOAD_MB * 1024 * 1024);
+    if (tooLarge) throw new ApiError(`${tooLarge.name} is larger than ${MAX_UPLOAD_MB} MB`, 413);
+    for (const file of files) {
+        const form = new FormData();
+        form.append('files', file);
+        Object.entries(target).forEach(([k, v]) => v && form.append(k, v));
+        await api('/attachments', { form });
+    }
 }
 
 export async function uploadAvatar(file: File) {
