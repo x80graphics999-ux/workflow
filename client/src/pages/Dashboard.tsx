@@ -6,7 +6,7 @@ import { Badge, Button, Card, cx, Empty, Icon, Loading, PageHeader, Stat } from 
 import { useApi } from '../lib/api';
 import { useMe } from '../lib/auth';
 import { formatDateTime, formatDuration, ROLE_LABEL, timeAgo } from '../lib/format';
-import type { ActivityItem, Dashboard, TaskSummary } from '../lib/types';
+import { isManagerRole, isStaffRole, type ActivityItem, type Dashboard, type TaskSummary } from '../lib/types';
 
 export function DashboardPage() {
     const me = useMe();
@@ -14,13 +14,9 @@ export function DashboardPage() {
     const [assigning, setAssigning] = useState(false);
     const navigate = useNavigate();
 
-    const isEmployee = me.role === 'EMPLOYEE';
-    const title = {
-        ADMIN: 'Organization overview',
-        MANAGER: 'Team performance',
-        TEAM_LEAD: 'Team progress',
-        EMPLOYEE: 'My tasks',
-    }[me.role];
+    const isEmployee = isStaffRole(me.role);
+    const title =
+        me.role === 'ADMIN' ? 'Organization overview' : isManagerRole(me.role) ? 'Team performance' : me.role === 'TEAM_LEAD' ? 'Team progress' : 'My tasks';
 
     return (
         <>

@@ -1,6 +1,6 @@
 # TaskFlow — Employee Task Assistance & Workflow Platform
 
-Task assignment, time tracking, blockers, recurring work, team chat and reporting for four roles: **Admin, Manager, Team Lead, Employee**. Branded for FixIT Consul-Tech.
+Task assignment, time tracking, blockers, recurring work, team chat and reporting for seven roles: **Admin, Manager, Assistant Manager, Team Lead, Senior Accounts Executive, Accounts Executive, Intern**. Branded for FixIT Consul-Tech.
 
 ## Quick start
 
@@ -14,13 +14,15 @@ npm run dev       # API on :4000, web app on http://localhost:5173
 
 Demo accounts (password `Password@123` for all):
 
-| Role      | Email                  |
-| --------- | ---------------------- |
-| Admin     | admin@taskflow.local   |
-| Manager   | manager@taskflow.local |
-| Team Lead | lead@taskflow.local    |
-| Employee  | emma@taskflow.local    |
-| Employee  | noah@taskflow.local    |
+| Role                      | Email                    |
+| ------------------------- | ------------------------ |
+| Admin                     | admin@taskflow.local     |
+| Manager                   | manager@taskflow.local   |
+| Assistant Manager         | assistant@taskflow.local |
+| Team Lead                 | lead@taskflow.local      |
+| Senior Accounts Executive | emma@taskflow.local      |
+| Accounts Executive        | noah@taskflow.local      |
+| Intern                    | intern@taskflow.local    |
 
 Change these passwords (or delete the demo users) before using it for real work.
 
@@ -34,7 +36,7 @@ Change these passwords (or delete the demo users) before using it for real work.
 
 ## What each role can do
 
-| Capability                                                      | Admin | Manager       | Team Lead       | Employee |
+| Capability                                                      | Admin | Manager / Assistant Manager | Team Lead | Senior Accounts Executive / Accounts Executive / Intern |
 | --------------------------------------------------------------- | ----- | ------------- | --------------- | -------- |
 | Create users, set roles, reset passwords, disable accounts      | ✓     |               |                 |          |
 | Create teams (manager + lead + members)                         | ✓     | view own      | view own        |          |
@@ -46,6 +48,8 @@ Change these passwords (or delete the demo users) before using it for real work.
 | Start/pause timer, report issues, complete tasks                 | own tasks | own tasks | own tasks     | ✓        |
 | Resolve issues / blockers                                       | ✓     | ✓             | ✓               |          |
 | Chat, create channels, direct messages, profile picture         | ✓     | ✓             | ✓               | ✓        |
+
+Existing **Employee** accounts become **Accounts Executive** automatically.
 
 ## Task lifecycle
 

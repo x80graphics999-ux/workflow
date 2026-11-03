@@ -6,7 +6,7 @@ import { Button, Card, cx, Icon, Loading, PageHeader } from '../components/ui';
 import { query, useApi } from '../lib/api';
 import { useMe } from '../lib/auth';
 import { STATUS_LABEL } from '../lib/format';
-import type { Client, TaskStatus, TaskSummary, User } from '../lib/types';
+import { isStaffRole, type Client, type TaskStatus, type TaskSummary, type User } from '../lib/types';
 
 const TABS: (TaskStatus | '')[] = ['', 'NEW', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED'];
 
@@ -17,7 +17,7 @@ export function TasksPage() {
     const [creating, setCreating] = useState(false);
     const [search, setSearch] = useState(params.get('q') ?? '');
 
-    const isEmployee = me.role === 'EMPLOYEE';
+    const isEmployee = isStaffRole(me.role);
     const status = params.get('status') ?? '';
     const assigneeId = params.get('assigneeId') ?? '';
     const clientId = params.get('clientId') ?? '';

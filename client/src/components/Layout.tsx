@@ -4,7 +4,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { api, useApi } from '../lib/api';
 import { useAuth, useMe } from '../lib/auth';
 import { ROLE_LABEL, timeAgo } from '../lib/format';
-import type { Notification, Role } from '../lib/types';
+import { OVERSEER_ROLES, type Notification, type Role } from '../lib/types';
 import { Avatar, cx, Icon } from './ui';
 
 type Section = 'tasks' | 'clients' | 'calendar' | 'activity' | 'chat';
@@ -14,11 +14,11 @@ const NAV: { to: string; label: string; icon: string; roles?: Role[]; badge?: Se
     { to: '/tasks', label: 'Tasks', icon: 'tasks', badge: 'tasks' },
     { to: '/calendar', label: 'Calendar', icon: 'calendar', badge: 'calendar' },
     { to: '/chat', label: 'Chat', icon: 'chat', badge: 'chat' },
-    { to: '/clients', label: 'Clients & projects', icon: 'briefcase', roles: ['ADMIN', 'MANAGER', 'TEAM_LEAD'], badge: 'clients' },
-    { to: '/teams', label: 'Teams', icon: 'team', roles: ['ADMIN', 'MANAGER', 'TEAM_LEAD'] },
+    { to: '/clients', label: 'Clients & projects', icon: 'briefcase', roles: OVERSEER_ROLES, badge: 'clients' },
+    { to: '/teams', label: 'Teams', icon: 'team', roles: OVERSEER_ROLES },
     { to: '/users', label: 'Users', icon: 'users', roles: ['ADMIN'] },
-    { to: '/activity', label: 'Work history', icon: 'history', roles: ['ADMIN', 'MANAGER', 'TEAM_LEAD'], badge: 'activity' },
-    { to: '/reports', label: 'Reports', icon: 'report', roles: ['ADMIN', 'MANAGER', 'TEAM_LEAD'] },
+    { to: '/activity', label: 'Work history', icon: 'history', roles: OVERSEER_ROLES, badge: 'activity' },
+    { to: '/reports', label: 'Reports', icon: 'report', roles: OVERSEER_ROLES },
     { to: '/account', label: 'My account', icon: 'user' },
 ];
 
@@ -285,7 +285,7 @@ function NotificationBell() {
                             </li>
                         ))}
                     </ul>
-                    {is('ADMIN', 'MANAGER', 'TEAM_LEAD') && (
+                    {is(...OVERSEER_ROLES) && (
                         <Link
                             to="/activity"
                             onClick={() => setOpen(false)}

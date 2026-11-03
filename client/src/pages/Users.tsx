@@ -3,7 +3,7 @@ import { Avatar, Badge, Button, Card, ErrorText, errorMessage, Field, Icon, Load
 import { api, useApi } from '../lib/api';
 import { useMe } from '../lib/auth';
 import { formatDate, ROLE_LABEL } from '../lib/format';
-import type { Role, Team, User } from '../lib/types';
+import { isManagerRole, type Role, type Team, type User } from '../lib/types';
 
 export function UsersPage() {
     const me = useMe();
@@ -11,6 +11,7 @@ export function UsersPage() {
     const { data: teams } = useApi<Team[]>('/teams');
     const [editing, setEditing] = useState<User | 'new' | null>(null);
     const [resetting, setResetting] = useState<User | null>(null);
+    const [deleting, setDeleting] = useState<User | null>(null);
     const [roleFilter, setRoleFilter] = useState<Role | ''>('');
 
     const list = (users ?? []).filter((u) => !roleFilter || u.role === roleFilter);
@@ -19,7 +20,7 @@ export function UsersPage() {
         <>
             <PageHeader
                 title="Users"
-                subtitle="Create accounts, set roles and reset passwords"
+                subtitle="Create accounts, set roles, reset passwords and delete users"
                 actions={
                     <Button onClick={() => setEditing('new')}>
                         <Icon name="plus" /> New user
@@ -74,6 +75,11 @@ export function UsersPage() {
                                             <Button variant="ghost" size="sm" onClick={() => setResetting(u)}>
                                                 Reset password
                                             </Button>
+                                            {u.id !== me.id && (
+                                                <Button variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-50" onClick={() => setDeleting(u)}>
+                                                    Delete
+                                                </Button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -95,6 +101,18 @@ export function UsersPage() {
                 />
             )}
             {resetting && <ResetPassword user={resetting} onClose={() => setResetting(null)} />}
+            {deleting && (
+                <DeleteUser
+                    user={deleting}
+                    candidates={(users ?? []).filter((u) => u.active && u.id !== deleting.id)}
+                    defaultHeirId={me.id}
+                    onClose={() => setDeleting(null)}
+                    onDeleted={() => {
+                        setDeleting(null);
+                        reload();
+                    }}
+                />
+            )}
         </>
     );
 }
@@ -103,7 +121,7 @@ function UserForm({ user, isSelf, teams, onClose, onSaved }: { user?: User; isSe
     const [form, setForm] = useState({
         name: user?.name ?? '',
         email: user?.email ?? '',
-        role: user?.role ?? ('EMPLOYEE' as Role),
+        role: user?.role ?? ('ACCOUNTS_EXECUTIVE' as Role),
         teamId: user?.teamId ?? '',
         password: '',
         active: user?.active ?? true,
@@ -147,7 +165,7 @@ function UserForm({ user, isSelf, teams, onClose, onSaved }: { user?: User; isSe
                             ))}
                         </select>
                     </Field>
-                    <Field label="Team" hint={form.role === 'MANAGER' ? 'Managers are linked to teams on the Teams page' : undefined}>
+                    <Field label="Team" hint={isManagerRole(form.role) ? 'Managers are linked to teams on the Teams page' : undefined}>
                         <select className="input" value={form.teamId} onChange={(e) => set('teamId', e.target.value)}>
                             <option value="">No team</option>
                             {teams.map((t) => (
@@ -176,6 +194,67 @@ function UserForm({ user, isSelf, teams, onClose, onSaved }: { user?: User; isSe
                     </Button>
                     <Button type="submit" disabled={saving}>
                         {saving ? 'Saving…' : user ? 'Save' : 'Create user'}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
+    );
+}
+
+function DeleteUser({
+    user,
+    candidates,
+    defaultHeirId,
+    onClose,
+    onDeleted,
+}: {
+    user: User;
+    candidates: User[];
+    defaultHeirId: string;
+    onClose: () => void;
+    onDeleted: () => void;
+}) {
+    const [heirId, setHeirId] = useState(defaultHeirId);
+    const [error, setError] = useState<string>();
+    const [deleting, setDeleting] = useState(false);
+
+    const submit = async (e: FormEvent) => {
+        e.preventDefault();
+        setDeleting(true);
+        setError(undefined);
+        try {
+            await api(`/users/${user.id}`, { method: 'DELETE', body: { transferToId: heirId } });
+            onDeleted();
+        } catch (err) {
+            setError(errorMessage(err));
+            setDeleting(false);
+        }
+    };
+
+    return (
+        <Modal title={`Delete ${user.name}`} onClose={onClose}>
+            <form onSubmit={submit} className="space-y-4">
+                <p className="text-sm text-slate-600">
+                    {user.name} ({user.email}) will no longer be able to sign in. This cannot be undone. To block access temporarily, disable the account
+                    under Edit instead.
+                </p>
+                <Field label="Hand their work over to" hint="Their tasks, time logs, issues, files and schedules move to this person.">
+                    <select className="input" required value={heirId} onChange={(e) => setHeirId(e.target.value)}>
+                        {candidates.map((u) => (
+                            <option key={u.id} value={u.id}>
+                                {u.name} · {ROLE_LABEL[u.role]}
+                            </option>
+                        ))}
+                    </select>
+                </Field>
+                <p className="text-sm text-slate-600">Their notifications, chat messages and direct conversations are deleted.</p>
+                <ErrorText>{error}</ErrorText>
+                <div className="flex justify-end gap-2">
+                    <Button variant="secondary" onClick={onClose}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" variant="danger" disabled={deleting || !heirId}>
+                        {deleting ? 'Deleting…' : 'Delete user'}
                     </Button>
                 </div>
             </form>

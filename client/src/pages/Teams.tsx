@@ -4,7 +4,7 @@ import { Avatar, Button, Card, Empty, ErrorText, errorMessage, Field, Icon, Load
 import { api, useApi } from '../lib/api';
 import { useMe } from '../lib/auth';
 import { ROLE_LABEL } from '../lib/format';
-import type { Team, User } from '../lib/types';
+import { isManagerRole, isStaffRole, type Team, type User } from '../lib/types';
 
 export function TeamsPage() {
     const me = useMe();
@@ -102,9 +102,9 @@ function TeamForm({ team, users, onClose, onSaved }: { team?: Team; users: User[
     const [saving, setSaving] = useState(false);
 
     const active = users.filter((u) => u.active);
-    const managers = active.filter((u) => u.role === 'MANAGER');
+    const managers = active.filter((u) => isManagerRole(u.role));
     const leads = active.filter((u) => u.role === 'TEAM_LEAD');
-    const memberCandidates = active.filter((u) => u.role === 'EMPLOYEE' || u.role === 'TEAM_LEAD');
+    const memberCandidates = active.filter((u) => isStaffRole(u.role) || u.role === 'TEAM_LEAD');
 
     const toggle = (id: string) =>
         setForm((f) => ({ ...f, memberIds: f.memberIds.includes(id) ? f.memberIds.filter((m) => m !== id) : [...f.memberIds, id] }));

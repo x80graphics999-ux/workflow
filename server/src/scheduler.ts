@@ -1,4 +1,5 @@
 import type { Schedule } from '@prisma/client';
+import { isManagerRole } from './auth.js';
 import { db } from './db.js';
 import { logActivity } from './lib/activity.js';
 import { notify } from './lib/notify.js';
@@ -36,7 +37,7 @@ export async function scheduleRecipients(s: Schedule): Promise<string[]> {
             (await db.user.findMany({ where: { active: true }, select: { id: true } })).forEach((u) => ids.add(u.id));
         } else {
             const teams = await db.team.findMany({
-                where: creator?.role === 'MANAGER' ? { managerId: s.createdById } : { leadId: s.createdById },
+                where: creator && isManagerRole(creator.role) ? { managerId: s.createdById } : { leadId: s.createdById },
                 select: { leadId: true, members: { where: { active: true }, select: { id: true } } },
             });
             for (const t of teams) {

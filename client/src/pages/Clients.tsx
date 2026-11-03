@@ -4,7 +4,7 @@ import { Button, Card, Empty, ErrorText, errorMessage, Field, Icon, Loading, Mod
 import { api, uploadFiles, useApi } from '../lib/api';
 import { useMe } from '../lib/auth';
 import { ROLE_LABEL } from '../lib/format';
-import type { Client, Project, User } from '../lib/types';
+import { isManagerRole, type Client, type Project, type User } from '../lib/types';
 import { AttachmentList } from './TaskDetail';
 
 type Editing = { kind: 'client'; item?: Client } | { kind: 'project'; item?: Project; clientId?: string };
@@ -21,7 +21,7 @@ export function ClientsPage() {
         reloadClients();
         reloadProjects();
     };
-    const managers = (users ?? []).filter((u) => u.active && (u.role === 'MANAGER' || u.role === 'TEAM_LEAD'));
+    const managers = (users ?? []).filter((u) => u.active && (isManagerRole(u.role) || u.role === 'TEAM_LEAD'));
     const unassigned = (projects ?? []).filter((p) => !p.clientId || !clients?.some((c) => c.id === p.clientId));
 
     if (!clients || !projects) return <Loading />;

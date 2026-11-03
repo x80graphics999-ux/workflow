@@ -1,0 +1,12 @@
+# Files the Vercel CLI must not upload (same as .gitignore): secrets, local data, build output.
+node_modules
+dist
+.env
+.env.local
+*.db
+*.db-journal
+server/uploads
+server/prisma/postgres
+logs
+*.tsbuildinfo
+.vercel

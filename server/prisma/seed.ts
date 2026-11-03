@@ -12,7 +12,33 @@ try {
 const db = new PrismaClient();
 const PASSWORD = 'Password@123';
 
+/** RESET_ADMIN=true: gives the first admin account the current ADMIN_EMAIL / ADMIN_PASSWORD / ADMIN_NAME. */
+async function resetAdmin() {
+    const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+    const password = process.env.ADMIN_PASSWORD ?? '';
+    if (!email || password.length < 8) throw new Error('RESET_ADMIN needs ADMIN_EMAIL and an ADMIN_PASSWORD of at least 8 characters');
+    const admin = await db.user.findFirst({ where: { role: 'ADMIN' }, orderBy: { createdAt: 'asc' } });
+    if (!admin) throw new Error('RESET_ADMIN: there is no admin account to reset');
+    const taken = await db.user.findUnique({ where: { email } });
+    if (taken && taken.id !== admin.id) throw new Error(`RESET_ADMIN: ${email} already belongs to another user`);
+    await db.user.update({
+        where: { id: admin.id },
+        data: {
+            email,
+            name: process.env.ADMIN_NAME?.trim() || admin.name,
+            passwordHash: await bcrypt.hash(password, 10),
+            active: true,
+        },
+    });
+    console.log(`Reset admin account ${admin.email} → ${email}. Remove RESET_ADMIN from the project settings now.`);
+}
+
 async function main() {
+    // The old EMPLOYEE role became ACCOUNTS_EXECUTIVE.
+    const renamed = await db.user.updateMany({ where: { role: 'EMPLOYEE' }, data: { role: 'ACCOUNTS_EXECUTIVE' } });
+    if (renamed.count) console.log(`Moved ${renamed.count} Employee account(s) to Accounts Executive.`);
+
+    if (process.env.RESET_ADMIN === 'true' && (await db.user.count()) > 0) return resetAdmin();
     if ((await db.user.count()) > 0) {
         console.log('Database already has users — skipping seed.');
         return;
@@ -43,9 +69,11 @@ async function main() {
 
     const admin = await user('Admin', 'admin@taskflow.local', 'ADMIN');
     const manager = await user('Maria Manager', 'manager@taskflow.local', 'MANAGER');
+    const asstManager = await user('Aria Assistant', 'assistant@taskflow.local', 'ASSISTANT_MANAGER');
     const lead = await user('Liam Lead', 'lead@taskflow.local', 'TEAM_LEAD');
-    const emp1 = await user('Emma Employee', 'emma@taskflow.local', 'EMPLOYEE');
-    const emp2 = await user('Noah Employee', 'noah@taskflow.local', 'EMPLOYEE');
+    const emp1 = await user('Emma Executive', 'emma@taskflow.local', 'SENIOR_ACCOUNTS_EXECUTIVE');
+    const emp2 = await user('Noah Executive', 'noah@taskflow.local', 'ACCOUNTS_EXECUTIVE');
+    const intern = await user('Ivy Intern', 'intern@taskflow.local', 'INTERN');
 
     const team = await db.team.create({
         data: {
@@ -55,7 +83,7 @@ async function main() {
             leadId: lead.id,
         },
     });
-    await db.user.updateMany({ where: { id: { in: [lead.id, emp1.id, emp2.id] } }, data: { teamId: team.id } });
+    await db.user.updateMany({ where: { id: { in: [lead.id, emp1.id, emp2.id, intern.id] } }, data: { teamId: team.id } });
 
     const client = await db.client.create({
         data: { name: 'Acme Corp', description: 'Retail client', managerId: manager.id },
@@ -118,7 +146,7 @@ async function main() {
     });
 
     console.log(`Seeded demo data. Every account uses the password: ${PASSWORD}`);
-    console.log([admin, manager, lead, emp1, emp2].map((u) => `  ${u.role.padEnd(10)} ${u.email}`).join('\n'));
+    console.log([admin, manager, asstManager, lead, emp1, emp2, intern].map((u) => `  ${u.role.padEnd(26)} ${u.email}`).join('\n'));
 }
 
 function nextWeekday(from: Date, days: number[]) {

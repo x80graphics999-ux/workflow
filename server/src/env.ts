@@ -12,6 +12,10 @@ function required(name: string): string {
     return value;
 }
 
+// Reminder texts and recurrence (weekday, day of month) use the server's time zone. Vercel runs on UTC
+// and reserves TZ, so APP_TIMEZONE (e.g. Asia/Karachi) sets it instead.
+if (process.env.APP_TIMEZONE) process.env.TZ = process.env.APP_TIMEZONE;
+
 // Vercel runs the API as short-lived functions with no persistent disk.
 const serverless = Boolean(process.env.VERCEL);
 

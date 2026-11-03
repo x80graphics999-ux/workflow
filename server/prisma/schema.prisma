@@ -15,7 +15,7 @@ model User {
   name         String
   email        String   @unique
   passwordHash String
-  role         String // ADMIN | MANAGER | TEAM_LEAD | EMPLOYEE
+  role         String // ADMIN | MANAGER | ASSISTANT_MANAGER | TEAM_LEAD | SENIOR_ACCOUNTS_EXECUTIVE | ACCOUNTS_EXECUTIVE | INTERN
   active       Boolean  @default(true)
   avatarUrl    String? // e.g. /api/avatars/<uuid>.png
   activitySeenAt DateTime? // last visit to Work history; newer activity shows as a count in the sidebar

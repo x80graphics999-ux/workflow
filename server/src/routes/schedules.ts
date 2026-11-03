@@ -2,7 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { Router } from 'express';
 import { z } from 'zod';
 import type { AuthUser } from '../auth.js';
-import { requireRole } from '../auth.js';
+import { OVERSEER_ROLES, requireRole } from '../auth.js';
 import { db } from '../db.js';
 import { badRequest, forbidden, notFound, parse } from '../http.js';
 import { logActivity } from '../lib/activity.js';
@@ -78,7 +78,7 @@ const scheduleInput = z
     })
     .refine((s) => s.recipientType !== 'TEAM' || !!s.recipientTeamId, { message: 'Choose a team', path: ['recipientTeamId'] });
 
-schedulesRouter.post('/', requireRole('ADMIN', 'MANAGER', 'TEAM_LEAD'), async (req, res) => {
+schedulesRouter.post('/', requireRole(...OVERSEER_ROLES), async (req, res) => {
     const data = parse(scheduleInput, req.body);
 
     if (data.assigneeId) await assertCanAssign(req.user, data.assigneeId);

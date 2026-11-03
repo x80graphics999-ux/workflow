@@ -1,4 +1,20 @@
-export type Role = 'ADMIN' | 'MANAGER' | 'TEAM_LEAD' | 'EMPLOYEE';
+export type Role =
+    | 'ADMIN'
+    | 'MANAGER'
+    | 'ASSISTANT_MANAGER'
+    | 'TEAM_LEAD'
+    | 'SENIOR_ACCOUNTS_EXECUTIVE'
+    | 'ACCOUNTS_EXECUTIVE'
+    | 'INTERN';
+
+/** Manage teams and see their teams' work. */
+export const MANAGER_ROLES: Role[] = ['MANAGER', 'ASSISTANT_MANAGER'];
+/** Work only on their own tasks; cannot assign work. */
+export const STAFF_ROLES: Role[] = ['SENIOR_ACCOUNTS_EXECUTIVE', 'ACCOUNTS_EXECUTIVE', 'INTERN'];
+/** Roles that oversee other people's work. */
+export const OVERSEER_ROLES: Role[] = ['ADMIN', ...MANAGER_ROLES, 'TEAM_LEAD'];
+export const isManagerRole = (role: Role) => MANAGER_ROLES.includes(role);
+export const isStaffRole = (role: Role) => STAFF_ROLES.includes(role);
 export type TaskStatus = 'NEW' | 'IN_PROGRESS' | 'BLOCKED' | 'COMPLETED';
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 

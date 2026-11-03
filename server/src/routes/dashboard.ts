@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { isStaffRole } from '../auth.js';
 import { db } from '../db.js';
 import { describeRule } from '../lib/recurrence.js';
 import { taskScope, visibleUserIds } from '../lib/scope.js';
@@ -11,7 +12,7 @@ export const dashboardRouter = Router();
 dashboardRouter.get('/', async (req, res) => {
     const user = req.user;
     const now = new Date();
-    const scope = user.role === 'EMPLOYEE' ? { assigneeId: user.id } : await taskScope(user);
+    const scope = isStaffRole(user.role) ? { assigneeId: user.id } : await taskScope(user);
 
     const [byStatus, timeSum, mine, upcomingTasks, upcomingSchedules, openIssues, recentActivity] = await Promise.all([
         db.task.groupBy({ by: ['status'], where: scope, _count: { _all: true } }),
@@ -49,7 +50,7 @@ dashboardRouter.get('/', async (req, res) => {
             take: 10,
         }),
         db.activity.findMany({
-            where: user.role === 'EMPLOYEE' ? { OR: [{ actorId: user.id }, { task: { assigneeId: user.id } }] } : await activityScope(user),
+            where: isStaffRole(user.role) ? { OR: [{ actorId: user.id }, { task: { assigneeId: user.id } }] } : await activityScope(user),
             include: { actor: { select: { id: true, name: true } }, task: { select: { id: true, title: true } } },
             orderBy: { createdAt: 'desc' },
             take: 15,
@@ -61,7 +62,7 @@ dashboardRouter.get('/', async (req, res) => {
 
     // Per-person performance for admins, managers and leads.
     let team: unknown[] = [];
-    if (user.role !== 'EMPLOYEE') {
+    if (!isStaffRole(user.role)) {
         const ids = await visibleUserIds(user);
         const people = await db.user.findMany({
             where: { active: true, role: { not: 'ADMIN' }, ...(ids ? { id: { in: ids.filter((id) => id !== user.id) } } : {}) },

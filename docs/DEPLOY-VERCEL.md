@@ -37,6 +37,7 @@ Project → **Settings → Environment Variables**, for all environments:
 | `ADMIN_EMAIL` | The first admin's email |
 | `ADMIN_PASSWORD` | At least 8 characters |
 | `ADMIN_NAME` | The first admin's name |
+| `APP_TIMEZONE` | Your team's time zone, e.g. `Asia/Karachi` (Vercel runs on UTC; without this, reminder times are in UTC and weekly schedules near midnight can land on the wrong day) |
 
 Generate random strings with:
 
@@ -70,6 +71,8 @@ Open the `.vercel.app` address and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`
 Push to `main` and Vercel redeploys. Each build applies changes from `server/prisma/schema.prisma` to the database and keeps existing data; a change that would delete data stops the build instead.
 
 `ADMIN_PASSWORD` is only used on an empty database. Afterwards, change passwords under **My account**.
+
+**Locked out of the admin account?** Set new `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME` values, add `RESET_ADMIN` = `true`, and redeploy. The build gives the first admin account those details (log: `Reset admin account ...`). Then delete `RESET_ADMIN`, otherwise every deploy resets the admin again.
 
 ## Don't run the Vercel build on your own PC
 

@@ -39,7 +39,7 @@ export function TaskForm({
     // Editing keeps the current assignee selectable even if they're outside the picker's scope.
     const options = [...(people ?? [])];
     if (task && !options.some((p) => p.id === task.assigneeId)) {
-        options.unshift({ id: task.assigneeId, name: task.assignee.name, role: 'EMPLOYEE', teamId: null });
+        options.unshift({ id: task.assigneeId, name: task.assignee.name, role: 'ACCOUNTS_EXECUTIVE', teamId: null });
     }
     const visibleProjects = (projects ?? []).filter((p) => !form.clientId || p.clientId === form.clientId);
 

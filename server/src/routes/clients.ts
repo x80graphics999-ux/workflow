@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireRole } from '../auth.js';
+import { isManagerRole, requireRole } from '../auth.js';
 import { db } from '../db.js';
 import { badRequest, parse } from '../http.js';
 import { logActivity } from '../lib/activity.js';
@@ -18,7 +18,7 @@ const attachmentSelect = {
 async function assertManager(managerId?: string | null) {
     if (!managerId) return;
     const user = await db.user.findUnique({ where: { id: managerId } });
-    if (!user || !['MANAGER', 'TEAM_LEAD'].includes(user.role)) {
+    if (!user || !(isManagerRole(user.role) || user.role === 'TEAM_LEAD')) {
         throw badRequest('Clients and projects can be assigned to a manager or team lead');
     }
 }

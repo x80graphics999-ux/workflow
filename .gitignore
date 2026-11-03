@@ -18,3 +18,7 @@ node_modules/
 server/uploads/
 .vercel/
 dist/
+
+.vercel
+.env*
+!.env.example

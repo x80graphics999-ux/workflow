@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { Router } from 'express';
 import { z } from 'zod';
+import { isStaffRole } from '../auth.js';
 import { db } from '../db.js';
 import { parse } from '../http.js';
 import { activityScope } from './activity.js';
@@ -36,7 +37,7 @@ notificationsRouter.get('/counts', async (req, res) => {
 
 /** Work history entries by other people, in the user's scope, since their last visit to the page. */
 async function newActivityCount(user: Express.Request['user']) {
-    if (user.role === 'EMPLOYEE') return 0;
+    if (isStaffRole(user.role)) return 0;
     const { activitySeenAt } = await db.user.findUniqueOrThrow({ where: { id: user.id }, select: { activitySeenAt: true } });
     if (!activitySeenAt) {
         // First time: start counting from now rather than flagging the whole history as new.

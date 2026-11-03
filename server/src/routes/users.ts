@@ -3,11 +3,13 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireRole, ROLES } from '../auth.js';
 import { db } from '../db.js';
-import { badRequest, parse } from '../http.js';
+import { badRequest, notFound, parse } from '../http.js';
 import { logActivity } from '../lib/activity.js';
+import { removeAvatarFile } from '../lib/avatars.js';
 import { notify } from '../lib/notify.js';
 import { assignableUsers, visibleUserIds } from '../lib/scope.js';
 import { joinDefaultChannel } from './chat.js';
+import { stopTimers } from './tasks.js';
 
 export const usersRouter = Router();
 
@@ -94,6 +96,46 @@ usersRouter.patch('/:id', requireRole('ADMIN'), async (req, res) => {
         { subjectId: user.id },
     );
     res.json(user);
+});
+
+/**
+ * Deletes a user. Their work (tasks, time logs, issues, files, schedules) moves to `transferToId` so history and
+ * reports stay complete; their notifications, chat memberships, messages and direct-message channels are removed.
+ */
+usersRouter.delete('/:id', requireRole('ADMIN'), async (req, res) => {
+    const id = String(req.params.id);
+    if (id === req.user.id) throw badRequest('You cannot delete your own account');
+    const { transferToId } = parse(z.object({ transferToId: z.string({ required_error: 'Choose who takes over their work' }).min(1, 'Choose who takes over their work') }), req.body ?? {});
+    if (transferToId === id) throw badRequest('Choose a different user to take over their work');
+    const [user, heir] = await Promise.all([
+        db.user.findUnique({ where: { id } }),
+        db.user.findFirst({ where: { id: transferToId, active: true } }),
+    ]);
+    if (!user) throw notFound('User not found');
+    if (!heir) throw badRequest('The user taking over must be an active account');
+
+    await stopTimers(id);
+    const directChannels = await db.channel.findMany({ where: { kind: 'DIRECT', members: { some: { userId: id } } }, select: { id: true } });
+    await db.$transaction([
+        db.task.updateMany({ where: { assigneeId: id }, data: { assigneeId: heir.id, teamId: heir.teamId } }),
+        db.task.updateMany({ where: { creatorId: id }, data: { creatorId: heir.id } }),
+        db.timeLog.updateMany({ where: { userId: id }, data: { userId: heir.id } }),
+        db.issue.updateMany({ where: { reporterId: id }, data: { reporterId: heir.id } }),
+        db.issue.updateMany({ where: { resolverId: id }, data: { resolverId: heir.id } }),
+        db.attachment.updateMany({ where: { uploaderId: id }, data: { uploaderId: heir.id } }),
+        db.schedule.updateMany({ where: { createdById: id }, data: { createdById: heir.id } }),
+        db.schedule.updateMany({ where: { assigneeId: id }, data: { assigneeId: heir.id } }),
+        db.schedule.updateMany({ where: { recipientUserId: id }, data: { recipientUserId: heir.id } }),
+        db.channel.deleteMany({ where: { id: { in: directChannels.map((c) => c.id) } } }),
+        db.user.delete({ where: { id } }),
+    ]);
+    removeAvatarFile(user.avatarUrl);
+
+    await logActivity(req.user.id, 'user.deleted', `${req.user.name} deleted ${user.name} (${user.email}); their work moved to ${heir.name}`, null, {
+        notified: [heir.id],
+    });
+    await notify([heir.id], `You took over ${user.name}'s work`, `${user.name}'s account was deleted by ${req.user.name}. Their tasks and schedules are now yours.`, '/tasks');
+    res.json({ ok: true });
 });
 
 usersRouter.post('/:id/reset-password', requireRole('ADMIN'), async (req, res) => {

@@ -4,7 +4,7 @@ import { Badge, Button, Card, cx, Empty, ErrorText, errorMessage, Field, Icon, M
 import { api, query, useApi } from '../lib/api';
 import { useMe } from '../lib/auth';
 import { formatDateTime, PRIORITY_LABEL, ROLE_LABEL, toLocalInput } from '../lib/format';
-import type { AssignableUser, CalendarEvent, Client, Priority, Project, Schedule, Team, User } from '../lib/types';
+import { isStaffRole, type AssignableUser, type CalendarEvent, type Client, type Priority, type Project, type Schedule, type Team, type User } from '../lib/types';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -36,7 +36,7 @@ export function CalendarPage() {
         reloadSchedules();
     };
 
-    const canSchedule = me.role !== 'EMPLOYEE';
+    const canSchedule = !isStaffRole(me.role);
     const eventsOn = (d: Date) => (events ?? []).filter((e) => sameDay(new Date(e.date), d));
     const shift = (n: number) => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + n, 1));
 

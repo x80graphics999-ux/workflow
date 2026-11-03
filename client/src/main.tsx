@@ -4,7 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { Layout } from './components/Layout';
 import './index.css';
 import { AuthProvider, useAuth } from './lib/auth';
-import type { Role } from './lib/types';
+import { OVERSEER_ROLES, type Role } from './lib/types';
 import { AccountPage } from './pages/Account';
 import { ActivityPage } from './pages/Activity';
 import { CalendarPage } from './pages/Calendar';
@@ -30,7 +30,7 @@ function RoleOnly({ roles, children }: { roles: Role[]; children: ReactNode }) {
     return is(...roles) ? children : <Navigate to="/" replace />;
 }
 
-const OVERSEERS: Role[] = ['ADMIN', 'MANAGER', 'TEAM_LEAD'];
+const OVERSEERS: Role[] = OVERSEER_ROLES;
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>

@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireRole } from '../auth.js';
+import { OVERSEER_ROLES, requireRole } from '../auth.js';
 import { db } from '../db.js';
 import { parse } from '../http.js';
 import { taskScope } from '../lib/scope.js';
@@ -22,7 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
     COMPLETED: 'Completed',
 };
 
-reportsRouter.get('/tasks.xlsx', requireRole('ADMIN', 'MANAGER', 'TEAM_LEAD'), async (req, res) => {
+reportsRouter.get('/tasks.xlsx', requireRole(...OVERSEER_ROLES), async (req, res) => {
     const f = parse(
         z.object({
             from: z.string().optional(),

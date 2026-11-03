@@ -3,8 +3,11 @@ import type { Priority, Role, TaskStatus, TaskSummary } from './types';
 export const ROLE_LABEL: Record<Role, string> = {
     ADMIN: 'Admin',
     MANAGER: 'Manager',
+    ASSISTANT_MANAGER: 'Assistant Manager',
     TEAM_LEAD: 'Team Lead',
-    EMPLOYEE: 'Employee',
+    SENIOR_ACCOUNTS_EXECUTIVE: 'Senior Accounts Executive',
+    ACCOUNTS_EXECUTIVE: 'Accounts Executive',
+    INTERN: 'Intern',
 };
 
 export const STATUS_LABEL: Record<TaskStatus, string> = {

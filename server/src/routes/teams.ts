@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireRole } from '../auth.js';
+import { isManagerRole, requireRole } from '../auth.js';
 import { db } from '../db.js';
 import { badRequest, parse } from '../http.js';
 import { logActivity } from '../lib/activity.js';
@@ -35,7 +35,7 @@ const teamInput = z.object({
 async function validateRoles(managerId?: string | null, leadId?: string | null) {
     if (managerId) {
         const m = await db.user.findUnique({ where: { id: managerId } });
-        if (m?.role !== 'MANAGER') throw badRequest('The selected manager must have the Manager role');
+        if (!m || !isManagerRole(m.role)) throw badRequest('The selected manager must have the Manager or Assistant Manager role');
     }
     if (leadId) {
         const l = await db.user.findUnique({ where: { id: leadId } });

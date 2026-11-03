@@ -4,8 +4,26 @@ import { db } from './db.js';
 import { env } from './env.js';
 import { forbidden, HttpError } from './http.js';
 
-export const ROLES = ['ADMIN', 'MANAGER', 'TEAM_LEAD', 'EMPLOYEE'] as const;
+export const ROLES = [
+    'ADMIN',
+    'MANAGER',
+    'ASSISTANT_MANAGER',
+    'TEAM_LEAD',
+    'SENIOR_ACCOUNTS_EXECUTIVE',
+    'ACCOUNTS_EXECUTIVE',
+    'INTERN',
+] as const;
 export type Role = (typeof ROLES)[number];
+
+/** Manage teams, see their teams' work, get clients/projects assigned. */
+export const MANAGER_ROLES: readonly Role[] = ['MANAGER', 'ASSISTANT_MANAGER'];
+/** Work only on their own tasks; cannot assign work. */
+export const STAFF_ROLES: readonly Role[] = ['SENIOR_ACCOUNTS_EXECUTIVE', 'ACCOUNTS_EXECUTIVE', 'INTERN'];
+/** Roles that oversee other people's work. */
+export const OVERSEER_ROLES: Role[] = ['ADMIN', ...MANAGER_ROLES, 'TEAM_LEAD'];
+
+export const isManagerRole = (role: string) => (MANAGER_ROLES as readonly string[]).includes(role);
+export const isStaffRole = (role: string) => (STAFF_ROLES as readonly string[]).includes(role);
 
 export interface AuthUser {
     id: string;
