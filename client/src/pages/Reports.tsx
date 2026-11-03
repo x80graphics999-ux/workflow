@@ -35,7 +35,7 @@ export function ReportsPage() {
         setExporting(true);
         setError(undefined);
         try {
-            await download(`/reports/tasks.xlsx${query(filters)}`, 'taskflow-report.xlsx');
+            await download(`/reports/tasks.xlsx${query(filters)}`, 'fixflow-report.xlsx');
         } catch (err) {
             setError(errorMessage(err));
         } finally {

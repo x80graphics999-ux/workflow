@@ -1,14 +1,14 @@
-# Running TaskFlow on your local network (LAN)
+# Running FixFlow on your local network (LAN)
 
-This guide sets up one Windows PC as the TaskFlow server so everyone on the same office network can use it from their browser, on computers, tablets or phones. Nothing is installed on the other devices.
+This guide sets up one Windows PC as the FixFlow server so everyone on the same office network can use it from their browser, on computers, tablets or phones. Nothing is installed on the other devices.
 
 ```
  Colleague's laptop ─┐
- Colleague's phone ──┼──►  http://<server-ip>:4000  ──►  Server PC (TaskFlow + database + uploaded files)
+ Colleague's phone ──┼──►  http://<server-ip>:4000  ──►  Server PC (FixFlow + database + uploaded files)
  Manager's desktop ──┘
 ```
 
-TaskFlow runs as a single program on port **4000**: it serves the web app, the API, uploaded files and the reminder scheduler. All data is stored on the server PC (`server/prisma/dev.db` and `server/uploads/`).
+FixFlow runs as a single program on port **4000**: it serves the web app, the API, uploaded files and the reminder scheduler. All data is stored on the server PC (`server/prisma/dev.db` and `server/uploads/`).
 
 ---
 
@@ -16,7 +16,7 @@ TaskFlow runs as a single program on port **4000**: it serves the web app, the A
 
 - A Windows PC that stays on during working hours (the "server PC").
 - [Node.js 22 or newer](https://nodejs.org) installed on it. Check with `node -v`.
-- The TaskFlow project folder on that PC (this guide uses `E:\taskflow`; replace it with your path).
+- The FixFlow project folder on that PC (this guide uses `E:\taskflow`; replace it with your path).
 - All devices connected to the same network (same office router or Wi-Fi). Guest Wi-Fi networks usually block devices from reaching each other.
 
 ---
@@ -46,7 +46,7 @@ npm run setup
 
 ---
 
-## Step 2: Build and start TaskFlow
+## Step 2: Build and start FixFlow
 
 ```powershell
 npm run build
@@ -56,7 +56,7 @@ npm start
 When it's ready you'll see:
 
 ```
-TaskFlow API listening on http://localhost:4000
+FixFlow API listening on http://localhost:4000
   On your network:  http://192.168.20.113:4000
 ```
 
@@ -68,14 +68,14 @@ The **"On your network"** line is the address colleagues will use. Open it in a 
 
 ---
 
-## Step 3: Allow TaskFlow through Windows Firewall
+## Step 3: Allow FixFlow through Windows Firewall
 
 Windows blocks incoming connections by default, so other devices can't reach port 4000 until you allow it.
 
 Open **PowerShell as Administrator** (right-click → *Run as administrator*) and run:
 
 ```powershell
-New-NetFirewallRule -DisplayName "TaskFlow (port 4000)" -Direction Inbound -Protocol TCP -LocalPort 4000 -Action Allow -Profile Private,Domain
+New-NetFirewallRule -DisplayName "FixFlow (port 4000)" -Direction Inbound -Protocol TCP -LocalPort 4000 -Action Allow -Profile Private,Domain
 ```
 
 The rule applies to **Private** and **Domain** networks. Check that Windows treats your office network as Private: **Settings → Network & Internet → (your connection) → Network profile type → Private**.
@@ -86,7 +86,7 @@ The rule applies to **Private** and **Domain** networks. Check that Windows trea
 1. Start menu → **Windows Defender Firewall with Advanced Security**.
 2. **Inbound Rules → New Rule…**
 3. **Port** → **TCP**, specific local port **4000** → **Allow the connection**.
-4. Tick **Domain** and **Private** → name it **TaskFlow (port 4000)** → Finish.
+4. Tick **Domain** and **Private** → name it **FixFlow (port 4000)** → Finish.
 </details>
 
 ---
@@ -111,26 +111,26 @@ On any device on the same network, open:
 
 Bookmark it, or create a desktop shortcut. Phones and tablets work too; the layout adapts to small screens.
 
-**Optional: a friendly name.** To use `http://taskflow:4000` instead of the IP, add this line to each computer's hosts file (`C:\Windows\System32\drivers\etc\hosts`, edited as Administrator), or ask IT to add a DNS entry on the router:
+**Optional: a friendly name.** To use `http://fixflow:4000` instead of the IP, add this line to each computer's hosts file (`C:\Windows\System32\drivers\etc\hosts`, edited as Administrator), or ask IT to add a DNS entry on the router:
 
 ```
-192.168.20.113   taskflow
+192.168.20.113   fixflow
 ```
 
 ---
 
-## Step 6: Start TaskFlow automatically
+## Step 6: Start FixFlow automatically
 
-So TaskFlow comes back on its own after a restart or power cut, register it with Windows Task Scheduler. The project includes `scripts\start-taskflow.cmd`, which starts TaskFlow and writes its output to `logs\taskflow.log`.
+So FixFlow comes back on its own after a restart or power cut, register it with Windows Task Scheduler. The project includes `scripts\start-fixflow.cmd`, which starts FixFlow and writes its output to `logs\fixflow.log`.
 
 In **PowerShell as Administrator**:
 
 ```powershell
-$action   = New-ScheduledTaskAction -Execute "E:\taskflow\scripts\start-taskflow.cmd"
+$action   = New-ScheduledTaskAction -Execute "E:\taskflow\scripts\start-fixflow.cmd"
 $trigger  = New-ScheduledTaskTrigger -AtStartup
 $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Seconds 0) `
             -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -StartWhenAvailable
-Register-ScheduledTask -TaskName "TaskFlow" -Action $action -Trigger $trigger -Settings $settings `
+Register-ScheduledTask -TaskName "FixFlow" -Action $action -Trigger $trigger -Settings $settings `
             -User "$env:USERDOMAIN\$env:USERNAME" -Password (Read-Host "Your Windows password") -RunLevel Limited
 ```
 
@@ -138,13 +138,13 @@ Your Windows password is needed so the task can run before anyone signs in. Task
 
 Then:
 
-- **Start it now:** `Start-ScheduledTask -TaskName "TaskFlow"` (close any `npm start` window first).
-- **Check it's running:** open the network address in a browser, or read `E:\taskflow\logs\taskflow.log`.
-- **Stop it:** `Stop-ScheduledTask -TaskName "TaskFlow"`. If the site still answers, stop the process holding the port:
+- **Start it now:** `Start-ScheduledTask -TaskName "FixFlow"` (close any `npm start` window first).
+- **Check it's running:** open the network address in a browser, or read `E:\taskflow\logs\fixflow.log`.
+- **Stop it:** `Stop-ScheduledTask -TaskName "FixFlow"`. If the site still answers, stop the process holding the port:
   ```powershell
   Stop-Process -Id (Get-NetTCPConnection -LocalPort 4000 -State Listen).OwningProcess -Force
   ```
-- **Remove it:** `Unregister-ScheduledTask -TaskName "TaskFlow"`.
+- **Remove it:** `Unregister-ScheduledTask -TaskName "FixFlow"`.
 
 **Keep the PC awake:** Settings → System → Power → set **Sleep** to **Never** when plugged in. A sleeping PC drops everyone's connection and stops the reminder scheduler.
 
@@ -154,13 +154,13 @@ Then:
 
 - **Remove or secure the demo accounts.** Every demo user has the password `Password@123`. In **Users**, create real accounts, then disable the demo ones or reset their passwords. Change the admin password under **My account**.
 - **Use a strong `JWT_SECRET`** (Step 1). Changing it later signs everyone out, which is harmless.
-- **Keep it on the LAN.** Don't forward port 4000 on the router to the internet. TaskFlow uses plain HTTP, which is fine inside the office but not safe over the internet. For remote staff, use the office VPN.
+- **Keep it on the LAN.** Don't forward port 4000 on the router to the internet. FixFlow uses plain HTTP, which is fine inside the office but not safe over the internet. For remote staff, use the office VPN.
 
 ---
 
-## Updating TaskFlow
+## Updating FixFlow
 
-1. Stop TaskFlow (Step 6 *Stop it*, or close the `npm start` window). Updating while it runs can fail with `EPERM` errors because Windows locks files that are in use.
+1. Stop FixFlow (Step 6 *Stop it*, or close the `npm start` window). Updating while it runs can fail with `EPERM` errors because Windows locks files that are in use.
 2. Replace the code (e.g. `git pull`, or copy the new files over, keeping `server\.env`, `server\prisma\dev.db` and `server\uploads`).
 3. Run:
    ```powershell
@@ -168,7 +168,7 @@ Then:
    npm run db:push -w server   # applies database changes; existing data is kept
    npm run build
    ```
-4. Start it again: `Start-ScheduledTask -TaskName "TaskFlow"` or `npm start`.
+4. Start it again: `Start-ScheduledTask -TaskName "FixFlow"` or `npm start`.
 
 Back up first (next section) before every update.
 
@@ -176,7 +176,7 @@ Back up first (next section) before every update.
 
 ## Backups
 
-Everything TaskFlow stores is in two places:
+Everything FixFlow stores is in two places:
 
 | What | Where |
 | --- | --- |
@@ -186,7 +186,7 @@ Everything TaskFlow stores is in two places:
 A simple daily backup to another drive (run in PowerShell, or schedule it with Task Scheduler for after hours):
 
 ```powershell
-$dest = "D:\TaskFlowBackups\$(Get-Date -Format yyyy-MM-dd)"
+$dest = "D:\FixFlowBackups\$(Get-Date -Format yyyy-MM-dd)"
 New-Item -ItemType Directory -Force $dest | Out-Null
 Copy-Item E:\taskflow\server\prisma\dev.db $dest
 robocopy E:\taskflow\server\uploads "$dest\uploads" /E /NFL /NDL /NJH /NJS
@@ -194,7 +194,7 @@ robocopy E:\taskflow\server\uploads "$dest\uploads" /E /NFL /NDL /NJH /NJS
 
 Back up when nobody is working, so the database isn't copied mid-change. Keep copies on a different disk or a network share, not only on the server PC.
 
-**To restore:** stop TaskFlow, copy `dev.db` back to `server\prisma\` and the `uploads` folder back to `server\`, then start TaskFlow.
+**To restore:** stop FixFlow, copy `dev.db` back to `server\prisma\` and the `uploads` folder back to `server\`, then start FixFlow.
 
 ---
 
@@ -203,13 +203,13 @@ Back up when nobody is working, so the database isn't copied mid-change. Keep co
 | Problem | What to check |
 | --- | --- |
 | Works on the server PC but not on other devices | Firewall rule (Step 3); network profile is **Private**; devices are on the same network, not guest Wi-Fi; VPN software on the device isn't routing traffic elsewhere. Test from another PC with `Test-NetConnection 192.168.20.113 -Port 4000` (should say `TcpTestSucceeded : True`). |
-| "This site can't be reached" everywhere | TaskFlow isn't running. Start it and check the last lines of `logs\taskflow.log`. |
+| "This site can't be reached" everywhere | FixFlow isn't running. Start it and check the last lines of `logs\fixflow.log`. |
 | `EADDRINUSE` in the log | Another copy is already using port 4000, often a forgotten `npm run dev` or a second `npm start`. Stop it (Step 6 *Stop it*). |
-| Old screens after an update | `npm run build` wasn't run. Run it and restart TaskFlow; users press Ctrl+F5 once. |
+| Old screens after an update | `npm run build` wasn't run. Run it and restart FixFlow; users press Ctrl+F5 once. |
 | The address stopped working after a restart | The PC got a new IP. Check the "On your network" line in the log and set up the reservation in Step 4. |
 | Everyone was signed out | `JWT_SECRET` changed, or sessions expired after 7 days. Sign in again. |
-| `EPERM: operation not permitted` while updating | TaskFlow was still running. Stop it and repeat the update. |
-| Reminders or recurring tasks didn't arrive | The PC was asleep or TaskFlow was stopped at that time. Keep it awake (Step 6). |
+| `EPERM: operation not permitted` while updating | FixFlow was still running. Stop it and repeat the update. |
+| Reminders or recurring tasks didn't arrive | The PC was asleep or FixFlow was stopped at that time. Keep it awake (Step 6). |
 | Desktop alerts can't be turned on from other devices | Browsers only allow desktop alerts on `https://` sites or on the server PC itself. The bell, pop-ups and sidebar numbers still work for everyone. |
 
 ---
@@ -220,7 +220,7 @@ Back up when nobody is working, so the database isn't copied mid-change. Keep co
 | --- | --- |
 | Start manually | `npm start` |
 | Rebuild after changes | `npm run build` |
-| Start / stop the background task | `Start-ScheduledTask -TaskName "TaskFlow"` / `Stop-ScheduledTask -TaskName "TaskFlow"` |
-| Find the server's address | `ipconfig`, or the "On your network" line in `logs\taskflow.log` |
+| Start / stop the background task | `Start-ScheduledTask -TaskName "FixFlow"` / `Stop-ScheduledTask -TaskName "FixFlow"` |
+| Find the server's address | `ipconfig`, or the "On your network" line in `logs\fixflow.log` |
 | Test a connection from another PC | `Test-NetConnection <server-ip> -Port 4000` |
 | Apply database changes after an update | `npm run db:push -w server` |

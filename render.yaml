@@ -2,21 +2,21 @@
 # on the free plan the database and uploads would be wiped on every deploy or restart.
 services:
   - type: web
-    name: taskflow
+    name: fixflow
     runtime: node
     plan: starter
     buildCommand: npm install --include=dev && npm run build:deploy
     startCommand: npm run start:deploy
     healthCheckPath: /api/health
     disk:
-      name: taskflow-data
+      name: fixflow-data
       mountPath: /var/data
       sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: "22"
       - key: DATABASE_URL
-        value: file:/var/data/taskflow.db
+        value: file:/var/data/fixflow.db
       - key: UPLOAD_DIR
         value: /var/data/uploads
       - key: JWT_SECRET

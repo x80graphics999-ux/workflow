@@ -29,7 +29,7 @@ export function LoginPage() {
             <div className="w-full max-w-sm">
                 <div className="mb-6 flex flex-col items-center gap-3">
                     <img src="/logo.png" alt="FixIT Consul-Tech" className="h-16 w-auto" />
-                    <span className="text-sm font-semibold tracking-[0.2em] text-brand-700 uppercase">TaskFlow</span>
+                    <span className="text-sm font-semibold tracking-[0.2em] text-brand-700 uppercase">FixFlow</span>
                 </div>
                 <form onSubmit={submit} className="card space-y-4 border-t-4 border-t-brand-600 p-6">
                     <div>

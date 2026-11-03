@@ -73,7 +73,7 @@ reportsRouter.get('/tasks.xlsx', requireRole(...OVERSEER_ROLES), async (req, res
     });
 
     const wb = new ExcelJS.Workbook();
-    wb.creator = 'TaskFlow';
+    wb.creator = 'FixFlow';
 
     const sheet = wb.addWorksheet('Tasks', { views: [{ state: 'frozen', ySplit: 1 }] });
     sheet.columns = [
@@ -189,7 +189,7 @@ reportsRouter.get('/tasks.xlsx', requireRole(...OVERSEER_ROLES), async (req, res
 
     const stamp = new Date().toISOString().slice(0, 10);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="taskflow-report-${stamp}.xlsx"`);
+    res.setHeader('Content-Disposition', `attachment; filename="fixflow-report-${stamp}.xlsx"`);
     await wb.xlsx.write(res);
     res.end();
 });

@@ -1,4 +1,4 @@
-// TaskFlow — Employee Task Assistance & Workflow Platform
+// FixFlow — Employee Task Assistance & Workflow Platform
 // SQLite has no native enums, so enum-like fields are strings; allowed values are listed beside each.
 
 generator client {

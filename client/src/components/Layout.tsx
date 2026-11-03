@@ -43,9 +43,9 @@ export function Layout() {
                     menuOpen ? 'translate-x-0' : '-translate-x-full',
                 )}
             >
-                <Link to="/" className="flex items-center gap-3 px-5 py-5" aria-label="TaskFlow home">
+                <Link to="/" className="flex items-center gap-3 px-5 py-5" aria-label="FixFlow home">
                     <img src="/logo.png" alt="FixIT Consul-Tech" className="h-9 w-auto" />
-                    <span className="border-l border-slate-200 pl-3 text-sm font-semibold tracking-wide text-brand-700">TaskFlow</span>
+                    <span className="border-l border-slate-200 pl-3 text-sm font-semibold tracking-wide text-brand-700">FixFlow</span>
                 </Link>
                 <nav className="flex-1 space-y-0.5 px-3">
                     {links.map((n) => (

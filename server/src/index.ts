@@ -6,7 +6,7 @@ import { ensureDefaultChannel } from './routes/chat.js';
 import { startScheduler } from './scheduler.js';
 
 app.listen(env.port, () => {
-    console.log(`TaskFlow API listening on http://localhost:${env.port}`);
+    console.log(`FixFlow API listening on http://localhost:${env.port}`);
     // Addresses other computers on the network can use (see docs/LAN-SETUP.md).
     const lan = Object.values(os.networkInterfaces())
         .flat()

@@ -67,13 +67,13 @@ async function main() {
     const user = (name: string, email: string, role: string) =>
         db.user.create({ data: { name, email, role, passwordHash } });
 
-    const admin = await user('Admin', 'admin@taskflow.local', 'ADMIN');
-    const manager = await user('Maria Manager', 'manager@taskflow.local', 'MANAGER');
-    const asstManager = await user('Aria Assistant', 'assistant@taskflow.local', 'ASSISTANT_MANAGER');
-    const lead = await user('Liam Lead', 'lead@taskflow.local', 'TEAM_LEAD');
-    const emp1 = await user('Emma Executive', 'emma@taskflow.local', 'SENIOR_ACCOUNTS_EXECUTIVE');
-    const emp2 = await user('Noah Executive', 'noah@taskflow.local', 'ACCOUNTS_EXECUTIVE');
-    const intern = await user('Ivy Intern', 'intern@taskflow.local', 'INTERN');
+    const admin = await user('Admin', 'admin@fixflow.local', 'ADMIN');
+    const manager = await user('Maria Manager', 'manager@fixflow.local', 'MANAGER');
+    const asstManager = await user('Aria Assistant', 'assistant@fixflow.local', 'ASSISTANT_MANAGER');
+    const lead = await user('Liam Lead', 'lead@fixflow.local', 'TEAM_LEAD');
+    const emp1 = await user('Emma Executive', 'emma@fixflow.local', 'SENIOR_ACCOUNTS_EXECUTIVE');
+    const emp2 = await user('Noah Executive', 'noah@fixflow.local', 'ACCOUNTS_EXECUTIVE');
+    const intern = await user('Ivy Intern', 'intern@fixflow.local', 'INTERN');
 
     const team = await db.team.create({
         data: {

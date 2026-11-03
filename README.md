@@ -1,4 +1,4 @@
-# TaskFlow — Employee Task Assistance & Workflow Platform
+# FixFlow — Employee Task Assistance & Workflow Platform
 
 Task assignment, time tracking, blockers, recurring work, team chat and reporting for seven roles: **Admin, Manager, Assistant Manager, Team Lead, Senior Accounts Executive, Accounts Executive, Intern**. Branded for FixIT Consul-Tech.
 
@@ -16,13 +16,13 @@ Demo accounts (password `Password@123` for all):
 
 | Role                      | Email                    |
 | ------------------------- | ------------------------ |
-| Admin                     | admin@taskflow.local     |
-| Manager                   | manager@taskflow.local   |
-| Assistant Manager         | assistant@taskflow.local |
-| Team Lead                 | lead@taskflow.local      |
-| Senior Accounts Executive | emma@taskflow.local      |
-| Accounts Executive        | noah@taskflow.local      |
-| Intern                    | intern@taskflow.local    |
+| Admin                     | admin@fixflow.local     |
+| Manager                   | manager@fixflow.local   |
+| Assistant Manager         | assistant@fixflow.local |
+| Team Lead                 | lead@fixflow.local      |
+| Senior Accounts Executive | emma@fixflow.local      |
+| Accounts Executive        | noah@fixflow.local      |
+| Intern                    | intern@fixflow.local    |
 
 Change these passwords (or delete the demo users) before using it for real work.
 
@@ -32,7 +32,7 @@ Change these passwords (or delete the demo users) before using it for real work.
 
 **Online for free (Vercel + Neon Postgres):** follow [docs/DEPLOY-VERCEL.md](docs/DEPLOY-VERCEL.md).
 
-**Office network (LAN):** to let everyone on your network use TaskFlow from one PC, follow [docs/LAN-SETUP.md](docs/LAN-SETUP.md). It covers the firewall, a fixed address, starting automatically, updates and backups.
+**Office network (LAN):** to let everyone on your network use FixFlow from one PC, follow [docs/LAN-SETUP.md](docs/LAN-SETUP.md). It covers the firewall, a fixed address, starting automatically, updates and backups.
 
 ## What each role can do
 
