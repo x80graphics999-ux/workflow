@@ -5,7 +5,7 @@ import { forbidden, notFound } from '../http.js';
 
 /**
  * Ids of users whose work `user` can see, or null for "everyone" (admin).
- * Manager / assistant manager → every member and lead of the teams they manage. Team lead → their own team.
+ * Manager / assistant manager → every member of the teams they manage. Team lead → every member of their own team.
  * Senior accounts executive, accounts executive, intern → only themselves.
  */
 export async function visibleUserIds(user: AuthUser): Promise<string[] | null> {
@@ -13,27 +13,19 @@ export async function visibleUserIds(user: AuthUser): Promise<string[] | null> {
     if (isStaffRole(user.role)) return [user.id];
 
     const teams = await db.team.findMany({
-        where: isManagerRole(user.role) ? { managerId: user.id } : { leadId: user.id },
-        select: { leadId: true, members: { select: { id: true } } },
+        where: isManagerRole(user.role) ? { managerId: user.id } : { id: user.teamId ?? '__none__' },
+        select: { members: { select: { id: true } } },
     });
     const ids = new Set<string>([user.id]);
-    for (const t of teams) {
-        if (t.leadId) ids.add(t.leadId);
-        t.members.forEach((m) => ids.add(m.id));
-    }
+    for (const t of teams) t.members.forEach((m) => ids.add(m.id));
     return [...ids];
 }
 
-/** Team ids the user manages (manager), leads or belongs to (lead), or belongs to (staff). Null = all. */
+/** Team ids the user manages (manager) or belongs to (lead, staff). Null = all. */
 export async function visibleTeamIds(user: AuthUser): Promise<string[] | null> {
     if (user.role === 'ADMIN') return null;
-    if (isStaffRole(user.role)) return user.teamId ? [user.teamId] : [];
-    const teams = await db.team.findMany({
-        where: isManagerRole(user.role)
-            ? { managerId: user.id }
-            : { OR: [{ leadId: user.id }, ...(user.teamId ? [{ id: user.teamId }] : [])] },
-        select: { id: true },
-    });
+    if (!isManagerRole(user.role)) return user.teamId ? [user.teamId] : [];
+    const teams = await db.team.findMany({ where: { managerId: user.id }, select: { id: true } });
     return teams.map((t) => t.id);
 }
 
@@ -79,9 +71,9 @@ export async function canManageTask(user: AuthUser, task: { creatorId: string; a
 }
 
 async function leadManagerIds(user: AuthUser) {
-    const teams = await db.team.findMany({ where: { leadId: user.id }, select: { managerId: true } });
+    const team = user.teamId ? await db.team.findUnique({ where: { id: user.teamId }, select: { managerId: true } }) : null;
     // The lead's own id is included so clients/projects assigned directly to them show up too.
-    return [user.id, ...teams.map((t) => t.managerId).filter((id): id is string => !!id)];
+    return [user.id, ...(team?.managerId ? [team.managerId] : [])];
 }
 
 /** Clients visible to the user: admin all, manager the ones assigned to them, lead their own and their manager's. */

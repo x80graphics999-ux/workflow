@@ -80,7 +80,6 @@ async function main() {
             name: 'Delivery Team',
             description: 'Client delivery and support',
             managerId: manager.id,
-            leadId: lead.id,
         },
     });
     await db.user.updateMany({ where: { id: { in: [lead.id, emp1.id, emp2.id, intern.id] } }, data: { teamId: team.id } });

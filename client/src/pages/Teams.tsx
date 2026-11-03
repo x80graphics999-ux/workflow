@@ -17,7 +17,7 @@ export function TeamsPage() {
         <>
             <PageHeader
                 title="Teams"
-                subtitle={isAdmin ? 'Group employees under a team lead and a manager' : 'Teams you manage or lead'}
+                subtitle={isAdmin ? 'Group people into teams under a manager' : 'Teams you manage or belong to'}
                 actions={
                     isAdmin && (
                         <Button onClick={() => setEditing('new')}>
@@ -30,7 +30,7 @@ export function TeamsPage() {
                 <Loading />
             ) : teams.length === 0 ? (
                 <Card>
-                    <Empty>{isAdmin ? 'No teams yet. Create one to map managers, leads and employees.' : 'You are not assigned to any team yet.'}</Empty>
+                    <Empty>{isAdmin ? 'No teams yet. Create one to group people under a manager.' : 'You are not assigned to any team yet.'}</Empty>
                 </Card>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -51,8 +51,6 @@ export function TeamsPage() {
                                 <dl className="grid grid-cols-[6rem_1fr] gap-y-1">
                                     <dt className="text-slate-500">Manager</dt>
                                     <dd className="font-medium">{t.manager?.name ?? '—'}</dd>
-                                    <dt className="text-slate-500">Team lead</dt>
-                                    <dd className="font-medium">{t.lead?.name ?? '—'}</dd>
                                 </dl>
                                 <div>
                                     <p className="label">Members · {t.members.length}</p>
@@ -95,7 +93,6 @@ function TeamForm({ team, users, onClose, onSaved }: { team?: Team; users: User[
         name: team?.name ?? '',
         description: team?.description ?? '',
         managerId: team?.managerId ?? '',
-        leadId: team?.leadId ?? '',
         memberIds: team?.members.map((m) => m.id) ?? [],
     });
     const [error, setError] = useState<string>();
@@ -103,7 +100,6 @@ function TeamForm({ team, users, onClose, onSaved }: { team?: Team; users: User[
 
     const active = users.filter((u) => u.active);
     const managers = active.filter((u) => isManagerRole(u.role));
-    const leads = active.filter((u) => u.role === 'TEAM_LEAD');
     const memberCandidates = active.filter((u) => isStaffRole(u.role) || u.role === 'TEAM_LEAD');
 
     const toggle = (id: string) =>
@@ -114,7 +110,7 @@ function TeamForm({ team, users, onClose, onSaved }: { team?: Team; users: User[
         setSaving(true);
         setError(undefined);
         try {
-            const body = { ...form, managerId: form.managerId || null, leadId: form.leadId || null };
+            const body = { ...form, managerId: form.managerId || null };
             if (team) await api(`/teams/${team.id}`, { method: 'PUT', body });
             else await api('/teams', { body });
             onSaved();
@@ -150,23 +146,13 @@ function TeamForm({ team, users, onClose, onSaved }: { team?: Team; users: User[
                             ))}
                         </select>
                     </Field>
-                    <Field label="Team lead">
-                        <select className="input" value={form.leadId} onChange={(e) => setForm({ ...form, leadId: e.target.value })}>
-                            <option value="">No lead</option>
-                            {leads.map((u) => (
-                                <option key={u.id} value={u.id}>
-                                    {u.name}
-                                </option>
-                            ))}
-                        </select>
-                    </Field>
                 </div>
                 <div>
                     <p className="label">Members</p>
                     <div className="grid max-h-60 gap-1 overflow-y-auto rounded-lg border border-slate-200 p-2 sm:grid-cols-2">
                         {memberCandidates.map((u) => (
                             <label key={u.id} className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-slate-50">
-                                <input type="checkbox" checked={form.memberIds.includes(u.id) || u.id === form.leadId} disabled={u.id === form.leadId} onChange={() => toggle(u.id)} />
+                                <input type="checkbox" checked={form.memberIds.includes(u.id)} onChange={() => toggle(u.id)} />
                                 <span>
                                     {u.name}
                                     <span className="ml-1 text-xs text-slate-400">

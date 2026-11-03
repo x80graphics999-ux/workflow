@@ -37,13 +37,13 @@ export async function stopTimers(userId: string, taskId?: string) {
     return running.length;
 }
 
-/** People who oversee the task: its creator plus the assignee's team lead and manager. */
+/** People who oversee the task: its creator plus the Team Leads and manager of the assignee's team. */
 async function overseers(task: { creatorId: string; assigneeId: string }, exclude: string) {
     const assignee = await db.user.findUnique({
         where: { id: task.assigneeId },
-        select: { team: { select: { leadId: true, managerId: true } } },
+        select: { team: { select: { managerId: true, members: { where: { role: 'TEAM_LEAD', active: true }, select: { id: true } } } } },
     });
-    const ids = [task.creatorId, assignee?.team?.leadId, assignee?.team?.managerId];
+    const ids = [task.creatorId, assignee?.team?.managerId, ...(assignee?.team?.members.map((m) => m.id) ?? [])];
     return ids.filter((id): id is string => !!id && id !== exclude && id !== task.assigneeId);
 }
 

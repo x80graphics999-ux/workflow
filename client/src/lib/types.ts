@@ -57,9 +57,7 @@ export interface Team {
     name: string;
     description: string;
     managerId: string | null;
-    leadId: string | null;
     manager: Ref | null;
-    lead: Ref | null;
     members: { id: string; name: string; role: Role; avatarUrl: string | null }[];
 }
 

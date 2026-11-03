@@ -10,7 +10,6 @@ export const teamsRouter = Router();
 
 const teamInclude = {
     manager: { select: { id: true, name: true } },
-    lead: { select: { id: true, name: true } },
     members: { select: { id: true, name: true, role: true, avatarUrl: true }, orderBy: { name: 'asc' } },
 } as const;
 
@@ -28,34 +27,28 @@ const teamInput = z.object({
     name: z.string().trim().min(1),
     description: z.string().optional(),
     managerId: z.string().nullable().optional(),
-    leadId: z.string().nullable().optional(),
     memberIds: z.array(z.string()).optional(),
 });
 
-async function validateRoles(managerId?: string | null, leadId?: string | null) {
+async function validateManager(managerId?: string | null) {
     if (managerId) {
         const m = await db.user.findUnique({ where: { id: managerId } });
         if (!m || !isManagerRole(m.role)) throw badRequest('The selected manager must have the Manager or Assistant Manager role');
     }
-    if (leadId) {
-        const l = await db.user.findUnique({ where: { id: leadId } });
-        if (l?.role !== 'TEAM_LEAD') throw badRequest('The selected lead must have the Team Lead role');
-    }
 }
 
 async function saveTeam(id: string | null, data: z.infer<typeof teamInput>) {
-    await validateRoles(data.managerId, data.leadId);
+    await validateManager(data.managerId);
     const fields = {
         name: data.name,
         description: data.description ?? '',
         managerId: data.managerId || null,
-        leadId: data.leadId || null,
+        leadId: null, // teams no longer have a separate lead; Team Leads are members
     };
     return db.$transaction(async (tx) => {
         const team = id ? await tx.team.update({ where: { id }, data: fields }) : await tx.team.create({ data: fields });
         if (data.memberIds) {
             const memberIds = new Set(data.memberIds);
-            if (fields.leadId) memberIds.add(fields.leadId); // the lead always belongs to their team
             await tx.user.updateMany({ where: { teamId: team.id, id: { notIn: [...memberIds] } }, data: { teamId: null } });
             await tx.user.updateMany({ where: { id: { in: [...memberIds] } }, data: { teamId: team.id } });
         }

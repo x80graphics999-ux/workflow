@@ -25,9 +25,8 @@ export async function scheduleRecipients(s: Schedule): Promise<string[]> {
     if (s.recipientType === 'TEAM' && s.recipientTeamId) {
         const team = await db.team.findUnique({
             where: { id: s.recipientTeamId },
-            select: { leadId: true, members: { where: { active: true }, select: { id: true } } },
+            select: { members: { where: { active: true }, select: { id: true } } },
         });
-        if (team?.leadId) ids.add(team.leadId);
         team?.members.forEach((m) => ids.add(m.id));
     }
 
@@ -37,13 +36,10 @@ export async function scheduleRecipients(s: Schedule): Promise<string[]> {
             (await db.user.findMany({ where: { active: true }, select: { id: true } })).forEach((u) => ids.add(u.id));
         } else {
             const teams = await db.team.findMany({
-                where: creator && isManagerRole(creator.role) ? { managerId: s.createdById } : { leadId: s.createdById },
-                select: { leadId: true, members: { where: { active: true }, select: { id: true } } },
+                where: creator && isManagerRole(creator.role) ? { managerId: s.createdById } : { id: creator?.teamId ?? '__none__' },
+                select: { members: { where: { active: true }, select: { id: true } } },
             });
-            for (const t of teams) {
-                if (t.leadId) ids.add(t.leadId);
-                t.members.forEach((m) => ids.add(m.id));
-            }
+            for (const t of teams) t.members.forEach((m) => ids.add(m.id));
         }
     }
     return [...ids];
