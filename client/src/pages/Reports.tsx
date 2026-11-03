@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ClientTimeTable } from '../components/ClientTimeTable';
 import { TaskTable } from '../components/TaskTable';
 import { Button, Card, ErrorText, errorMessage, Field, Icon, Loading, PageHeader, Stat } from '../components/ui';
 import { download, query, useApi } from '../lib/api';
@@ -111,6 +112,9 @@ export function ReportsPage() {
                 <Stat label="Completed" value={completed} tone="emerald" />
                 <Stat label="Time spent" value={formatDuration(total)} tone="brand" />
             </div>
+            <Card title="Time by client and project" className="mb-6">
+                {!tasks ? <Loading /> : <ClientTimeTable tasks={tasks} />}
+            </Card>
             <Card title="Preview">{!tasks ? <Loading /> : <TaskTable tasks={tasks} empty="No tasks in this range." />}</Card>
         </>
     );

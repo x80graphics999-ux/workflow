@@ -124,6 +124,44 @@ reportsRouter.get('/tasks.xlsx', requireRole(...OVERSEER_ROLES), async (req, res
     const totalRow = sheet.addRow({ title: `Total (${tasks.length} tasks)`, duration: duration(total), hours: total / 3600 });
     totalRow.font = { bold: true };
 
+    // Time per client, with a row for each of its projects.
+    type Totals = { name: string; tasks: number; completed: number; seconds: number };
+    const clients = new Map<string, Totals & { projects: Map<string, Totals> }>();
+    for (const t of tasks) {
+        const ck = t.clientId ?? '';
+        const c = clients.get(ck) ?? { name: t.client?.name ?? 'No client', tasks: 0, completed: 0, seconds: 0, projects: new Map() };
+        clients.set(ck, c);
+        const pk = t.projectId ?? '';
+        const p = c.projects.get(pk) ?? { name: t.project?.name ?? 'No project', tasks: 0, completed: 0, seconds: 0 };
+        c.projects.set(pk, p);
+        for (const x of [c, p]) {
+            x.tasks += 1;
+            if (t.status === 'COMPLETED') x.completed += 1;
+            x.seconds += t.totalSeconds;
+        }
+    }
+    const byClient = wb.addWorksheet('Clients & projects', { views: [{ state: 'frozen', ySplit: 1 }] });
+    byClient.columns = [
+        { header: 'Client', key: 'client', width: 26 },
+        { header: 'Project', key: 'project', width: 28 },
+        { header: 'Tasks', key: 'tasks', width: 8 },
+        { header: 'Completed', key: 'completed', width: 11 },
+        { header: 'Time spent', key: 'duration', width: 12 },
+        { header: 'Hours', key: 'hours', width: 8, style: { numFmt: '0.00' } },
+    ];
+    const hours = (s: number) => Math.round((s / 3600) * 100) / 100;
+    const last = (k: string) => (k === '' ? 1 : 0); // "No client" / "No project" go last
+    for (const [ck, c] of [...clients].sort(([ak, a], [bk, b]) => last(ak) - last(bk) || b.seconds - a.seconds)) {
+        const row = byClient.addRow({ client: c.name, project: 'All projects', tasks: c.tasks, completed: c.completed, duration: duration(c.seconds), hours: hours(c.seconds) });
+        row.font = { bold: true };
+        if (ck === '' && c.projects.size === 1 && c.projects.has('')) continue;
+        for (const [, p] of [...c.projects].sort(([ak, a], [bk, b]) => last(ak) - last(bk) || b.seconds - a.seconds)) {
+            byClient.addRow({ client: '', project: p.name, tasks: p.tasks, completed: p.completed, duration: duration(p.seconds), hours: hours(p.seconds) });
+        }
+    }
+    const grand = byClient.addRow({ client: 'Total', tasks: tasks.length, completed: tasks.filter((t) => t.status === 'COMPLETED').length, duration: duration(total), hours: hours(total) });
+    grand.font = { bold: true };
+
     const history = wb.addWorksheet('Assignment history', { views: [{ state: 'frozen', ySplit: 1 }] });
     history.columns = [
         { header: 'When', key: 'createdAt', width: 18, style: { numFmt: 'yyyy-mm-dd hh:mm' } },
@@ -142,7 +180,7 @@ reportsRouter.get('/tasks.xlsx', requireRole(...OVERSEER_ROLES), async (req, res
         });
     }
 
-    for (const ws of [sheet, history]) {
+    for (const ws of [sheet, byClient, history]) {
         const header = ws.getRow(1);
         header.font = { bold: true, color: { argb: 'FFFFFFFF' } };
         header.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2F5D50' } };
